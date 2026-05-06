@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 
 const dataDirectory = join(process.cwd(), "data");
 const excelPath = join(dataDirectory, "submissions.xlsx");
+const isVercel = Boolean(process.env.VERCEL);
 
 const ensureWorkbook = async () => {
   if (!existsSync(dataDirectory)) {
@@ -65,11 +66,7 @@ export async function POST(request) {
 
     const id = generateId();
 
-    // Save image to public/uploads
-    const uploadDir = join(process.cwd(), "public", "uploads");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
+    let photoPath = "";
 
     // Extract base64 data and extension
     const matches = photoBase64.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
@@ -87,14 +84,21 @@ export async function POST(request) {
     // Convert jpeg to jpg for standard extension
     if (ext === "jpeg") ext = "jpg";
 
-    const fileName = `${id}.${ext}`;
-    const photoPath = `/uploads/${fileName}`;
-    const fullPath = join(uploadDir, fileName);
-    
-    const buffer = Buffer.from(base64Data, "base64");
-    await writeFile(fullPath, buffer);
+    if (!isVercel) {
+      // Local/dev: save image to public/uploads so it can be served as static file.
+      const uploadDir = join(process.cwd(), "public", "uploads");
+      if (!existsSync(uploadDir)) {
+        await mkdir(uploadDir, { recursive: true });
+      }
 
-    const newRecord = {
+      const fileName = `${id}.${ext}`;
+      photoPath = `/uploads/${fileName}`;
+      const fullPath = join(uploadDir, fileName);
+      const buffer = Buffer.from(base64Data, "base64");
+      await writeFile(fullPath, buffer);
+    }
+
+    const recordToStore = {
       id,
       name,
       department,
@@ -105,9 +109,18 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     };
 
-    const records = await readRecords();
-    records.push(newRecord);
-    await saveRecords(records);
+    // Keep base64 only in API response (for immediate preview), not in Excel.
+    // XLSX cells have a 32,767 char limit and base64 images exceed that.
+    const responseRecord = {
+      ...recordToStore,
+      photoBase64,
+    };
+
+    if (!isVercel) {
+      const records = await readRecords();
+      records.push(recordToStore);
+      await saveRecords(records);
+    }
 
     // Send data to Google Sheets via Webhook
     try {
@@ -120,22 +133,22 @@ export async function POST(request) {
           },
           // Google Apps Script doPost gets the raw text, we stringify the object
           body: JSON.stringify({
-            id: newRecord.id,
-            name: newRecord.name,
-            department: newRecord.department,
-            institute: newRecord.institute,
-            phone: newRecord.phone,
-            email: newRecord.email,
-            createdAt: newRecord.createdAt,
+            id: recordToStore.id,
+            name: recordToStore.name,
+            department: recordToStore.department,
+            institute: recordToStore.institute,
+            phone: recordToStore.phone,
+            email: recordToStore.email,
+            createdAt: recordToStore.createdAt,
           }),
         }
       );
     } catch (sheetError) {
       console.error("Failed to save to Google Sheets:", sheetError);
-      // We continue since local save was successful
+      // Continue even if webhook fails.
     }
 
-    return Response.json({ record: newRecord }, { status: 201 });
+    return Response.json({ record: responseRecord }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -143,12 +143,31 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-4 p-4 sm:gap-6 sm:p-6 md:p-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-4 p-4 pt-24 sm:gap-6 sm:p-6 sm:pt-28 md:p-10 md:pt-32">
+      <header className="fixed left-1/2 top-3 z-50 flex w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2 flex-wrap items-center justify-between gap-3 rounded-xl border border-white/70 bg-white/75 px-3 py-2 shadow-sm backdrop-blur sm:top-4 sm:w-[calc(100%-3rem)] sm:px-4 md:w-[calc(100%-5rem)]">
+        <div className="flex items-center gap-2">
+          <img
+            src="/polytechnic-coders-main-logo.png"
+            alt="Polytechnic Coders Logo"
+            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+          />
+          <p className="text-sm font-bold tracking-wide text-zinc-800 sm:text-base">Polytechnic Coders</p>
+        </div>
+        <a
+          href="https://www.facebook.com/groups/polytechniccoders.ph"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-semibold text-violet-700 underline-offset-2 hover:underline sm:text-sm"
+        >
+         FB Group  
+        </a>
+      </header>
+
       <h1 className="text-xl font-bold tracking-wide text-zinc-900 sm:text-2xl">
         এক্সাম এ ধরা রেফার্ড কার্ড এ ভরসা
       </h1>
-      <p className="text-xs text-zinc-600 sm:text-sm">
-        Form submit করলে data Excel ফাইলে save হবে, এবং card download করা যাবে।
+      <p className="text-xs font-medium text-zinc-600 sm:text-sm">
+        নিজের তথ্য দিয়ে দ্রুত কার্ড তৈরি করুন এবং এক ক্লিকে ডাউনলোড করুন।
       </p>
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
@@ -350,6 +369,21 @@ export default function Home() {
 
           </div>
         </section> : null}
+      </div>
+
+      {/* Subtle & Funny Branding */}
+      <div className="mt-8 pb-4 text-center opacity-60 transition-opacity hover:opacity-100">
+        <p className="text-xs text-zinc-500 sm:text-sm">
+          যাদের নিজেদের কোডও রিফার্ড খায়, তাদের দ্বারা তৈরি 🥲 — {" "}
+          <a
+            href="https://www.facebook.com/PolytechnicCoders.PH"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-violet-600 hover:underline"
+          >
+            Polytechnic Coders PH
+          </a>
+        </p>
       </div>
     </main>
   );
